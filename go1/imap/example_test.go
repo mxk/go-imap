@@ -7,9 +7,10 @@ package imap_test
 import (
 	"bytes"
 	"fmt"
-	"mxcrypt/imap"
 	"net/mail"
 	"time"
+
+	"code.google.com/p/go-imap/go1/imap"
 )
 
 func ExampleClient() {
