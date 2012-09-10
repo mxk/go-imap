@@ -395,6 +395,38 @@ func (c *Client) UIDCopy(seq *SeqSet, mbox string) (cmd *Command, err error) {
 	return c.Send("UID COPY", seq, c.Quote(UTF7Encode(mbox)))
 }
 
+// SetQuota changes the resource limits of the specified quota root. See RFC
+// 2087 for additional information.
+func (c *Client) SetQuota(root string, quota ...*Quota) (cmd *Command, err error) {
+	if !c.Caps["QUOTA"] {
+		return nil, NotAvailableError("QUOTA")
+	}
+	f := make([]Field, 0, len(quota)*2)
+	for _, q := range quota {
+		f = append(f, q.Resource, q.Limit)
+	}
+	return c.Send("SETQUOTA", c.Quote(root), f)
+}
+
+// GetQuota returns the quota root's resource usage and limits. See RFC 2087 for
+// additional information.
+func (c *Client) GetQuota(root string, quota ...*Quota) (cmd *Command, err error) {
+	if !c.Caps["QUOTA"] {
+		return nil, NotAvailableError("QUOTA")
+	}
+	return c.Send("GETQUOTA", c.Quote(root))
+}
+
+// GetQuotaRoot returns the list of quota roots for the specified mailbox, and
+// the resource usage and limits for each quota root. See RFC 2087 for
+// additional information.
+func (c *Client) GetQuotaRoot(mbox string) (cmd *Command, err error) {
+	if !c.Caps["QUOTA"] {
+		return nil, NotAvailableError("QUOTA")
+	}
+	return c.Send("GETQUOTAROOT", c.Quote(UTF7Encode(mbox)))
+}
+
 // Idle places the client into an idle state where the server is free to send
 // unsolicited mailbox update messages. No other commands are allowed to run
 // while the client is idling. Use c.IdleTerm to terminate the command. See RFC

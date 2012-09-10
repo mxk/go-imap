@@ -803,3 +803,47 @@ func TestClientIdle(T *testing.T) {
 		t.Fatal("cmd1 == cmd2 expected true; got false")
 	}
 }
+
+func TestClientQuota(T *testing.T) {
+	//defer un(setLogMask(LogAll))
+	C, t := newClient(T, `S: * PREAUTH [CAPABILITY IMAP4rev1 QUOTA] Test server ready`+CRLF)
+
+	// SETQUOTA1
+	go t.script(
+		`C: A1 SETQUOTA "" (STORAGE 512)`+CRLF,
+		`S: * QUOTA "" (STORAGE 10 512)`+CRLF,
+		`S: A1 OK Setquota completed`+CRLF,
+	)
+	_, err := Wait(C.SetQuota("", &Quota{"STORAGE", 0, 512}))
+	t.join("SETQUOTA1", err)
+
+	// SETQUOTA2
+	go t.script(
+		`C: A2 SETQUOTA "" (STORAGE 512 MESSAGE 100)`+CRLF,
+		`S: * QUOTA "" (STORAGE 10 512 MESSAGE 20 100)`+CRLF,
+		`S: A2 OK Setquota completed`+CRLF,
+	)
+	_, err = Wait(C.SetQuota("", &Quota{"STORAGE", 0, 512}, &Quota{"MESSAGE", 0, 100}))
+	t.join("SETQUOTA2", err)
+
+	// GETQUOTA
+	go t.script(
+		`C: A3 GETQUOTA ""`+CRLF,
+		`S: * QUOTA "" (STORAGE 10 512)`+CRLF,
+		`S: A3 OK Getquota completed`+CRLF,
+	)
+	_, err = Wait(C.GetQuota(""))
+	t.join("GETQUOTA", err)
+
+	// GETQUOTAROOT
+	go t.script(
+		`C: A4 GETQUOTAROOT "INBOX"`+CRLF,
+		`S: * QUOTAROOT INBOX ""`+CRLF,
+		`S: * QUOTA "" (STORAGE 10 512)`+CRLF,
+		`S: A4 OK Getquota completed`+CRLF,
+		EOF,
+	)
+	_, err = Wait(C.GetQuotaRoot("INBOX"))
+	t.join("GETQUOTAROOT", err)
+	t.waitEOF()
+}

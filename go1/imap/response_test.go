@@ -170,6 +170,37 @@ func TestResponseDecoders(t *testing.T) {
 				Flags:        NewFlagSet(),
 				InternalDate: time.Date(1996, time.July, 17, 2, 44, 25, 0, MST),
 				Size:         1024}},
+
+		// QUOTA -> (string, []*Quota)
+		{`* NOT QUOTA`,
+			"Quota", []interface{}{
+				"", []*Quota(nil)}},
+		{`* QUOTA "" ()`,
+			"Quota", []interface{}{
+				"", []*Quota{}}},
+		{`* QUOTA "" (STORAGE 10 512)`,
+			"Quota", []interface{}{
+				"", []*Quota{&Quota{"STORAGE", 10, 512}}}},
+		{`* QUOTA "" (STORAGE 10 512 MESSAGE 20 100)`,
+			"Quota", []interface{}{
+				"", []*Quota{&Quota{"STORAGE", 10, 512}, &Quota{"MESSAGE", 20, 100}}}},
+		{`* QUOTA "inbox" (storage 10 512 message 20 100)`,
+			"Quota", []interface{}{
+				"inbox", []*Quota{&Quota{"STORAGE", 10, 512}, &Quota{"MESSAGE", 20, 100}}}},
+
+		// QUOTAROOT -> (string, []string)
+		{`* NOT QUOTAROOT`,
+			"QuotaRoot", []interface{}{
+				"", []string(nil)}},
+		{`* QUOTAROOT comp.mail.mime`,
+			"QuotaRoot", []interface{}{
+				"comp.mail.mime", []string{}}},
+		{`* QUOTAROOT INBOX ""`,
+			"QuotaRoot", []interface{}{
+				"INBOX", []string{""}}},
+		{`* QUOTAROOT "inbox" root1 "root2"`,
+			"QuotaRoot", []interface{}{
+				"INBOX", []string{"root1", "root2"}}},
 	}
 	c, s := newTestConn(1024)
 	C := newTransport(c, nil)

@@ -280,6 +280,63 @@ func (rsp *Response) MessageInfo() *MessageInfo {
 	return v
 }
 
+// Quota represents a single resource limit on a mailbox quota root returned in
+// a QUOTA response, as described in RFC 2087.
+type Quota struct {
+	Resource string // Resource name (e.g. STORAGE, MESSAGE)
+	Usage    uint32 // Current usage (in units of 1024 octets for STORAGE)
+	Limit    uint32 // Current limit
+}
+
+// Quota returns the resource quotas extracted from a QUOTA response.
+func (rsp *Response) Quota() (root string, quota []*Quota) {
+	type vt struct {
+		root  string
+		quota []*Quota
+	}
+	v, ok := rsp.Decoded.(*vt)
+	if !ok && rsp.Decoded == nil && rsp.Label == "QUOTA" {
+		list := AsList(rsp.Fields[2])
+		if len(list)%3 != 0 {
+			return
+		}
+		root = AsString(rsp.Fields[1])
+		quota = make([]*Quota, len(list)/3)
+		for i := 0; i < len(list); i += 3 {
+			quota[i/3] = &Quota{
+				Resource: toUpper(AsAtom(list[i])),
+				Usage:    AsNumber(list[i+1]),
+				Limit:    AsNumber(list[i+2]),
+			}
+		}
+		rsp.Decoded = &vt{root, quota}
+	} else if ok {
+		root, quota = v.root, v.quota
+	}
+	return
+}
+
+// QuotaRoot returns the mailbox name and associated quota roots from a
+// QUOTAROOT response.
+func (rsp *Response) QuotaRoot() (mbox string, roots []string) {
+	type vt struct {
+		mbox  string
+		roots []string
+	}
+	v, ok := rsp.Decoded.(*vt)
+	if !ok && rsp.Decoded == nil && rsp.Label == "QUOTAROOT" {
+		mbox = AsMailbox(rsp.Fields[1])
+		roots = make([]string, len(rsp.Fields[2:]))
+		for i, root := range rsp.Fields[2:] {
+			roots[i] = AsString(root)
+		}
+		rsp.Decoded = &vt{mbox, roots}
+	} else if ok {
+		mbox, roots = v.mbox, v.roots
+	}
+	return
+}
+
 // ResponseError wraps a Response pointer for use in an error context, such as
 // when a command fails with a NO or BAD status condition. For Status and Done
 // response types, the value of Response.Info may be presented to the user.

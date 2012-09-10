@@ -89,6 +89,7 @@ RFCs
 
 The following RFCs are implemented by this package:
 
+	http://tools.ietf.org/html/rfc2087 -- IMAP4 QUOTA extension
 	http://tools.ietf.org/html/rfc2088 -- IMAP4 non-synchronizing literals
 	http://tools.ietf.org/html/rfc2177 -- IMAP4 IDLE command
 	http://tools.ietf.org/html/rfc2971 -- IMAP4 ID extension
