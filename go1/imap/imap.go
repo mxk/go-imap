@@ -350,7 +350,7 @@ func (c *Client) Expunge(uids *SeqSet) (cmd *Command, err error) {
 // is the caller's responsibility to quote strings when necessary. All strings
 // must use UTF-8 encoding.
 func (c *Client) Search(spec ...Field) (cmd *Command, err error) {
-	return c.Send("SEARCH", append([]Field{"CHARSET", "UTF-8"}, spec...))
+	return c.Send("SEARCH", append([]Field{"CHARSET", "UTF-8"}, spec...)...)
 }
 
 // Fetch retrieves data associated with the specified message(s) in the mailbox.
@@ -374,7 +374,7 @@ func (c *Client) Copy(seq *SeqSet, mbox string) (cmd *Command, err error) {
 // UIDSearch is identical to Search, but the numbers returned in the response
 // are unique identifiers instead of message sequence numbers.
 func (c *Client) UIDSearch(spec ...Field) (cmd *Command, err error) {
-	return c.Send("UID SEARCH", append([]Field{"CHARSET", "UTF-8"}, spec...))
+	return c.Send("UID SEARCH", append([]Field{"CHARSET", "UTF-8"}, spec...)...)
 }
 
 // UIDFetch is identical to Fetch, but the seq argument is interpreted as
