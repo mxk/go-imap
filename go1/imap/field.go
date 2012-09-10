@@ -61,12 +61,15 @@ func AsNumber(f Field) uint32 {
 	return v
 }
 
-// AsString returns the value of a string field. Quoted strings are decoded to
-// their original representation. An empty string is returned if
-// TypeOf(f)&(QuotedString|LiteralString) == 0 or the string is invalid.
+// AsString returns the value of an astring (string or atom) field. Quoted
+// strings are decoded to their original representation. An empty string is
+// returned if TypeOf(f)&(Atom|QuotedString|LiteralString) == 0 or the string is
+// invalid.
 func AsString(f Field) string {
 	if v, ok := f.(string); ok {
-		v, _ = Unquote(v)
+		if Quoted(f) {
+			v, _ = Unquote(v)
+		}
 		return v
 	} else if _, ok = f.(Literal); ok {
 		return string(AsBytes(f))
@@ -120,10 +123,7 @@ func AsDateTime(f Field) time.Time {
 // strings encoded as quoted UTF-8 or modified UTF-7 are decoded appropriately.
 // The special case-insensitive name "INBOX" is always converted to upper case.
 func AsMailbox(f Field) string {
-	v := AsAtom(f)
-	if v == "" {
-		v = AsString(f)
-	}
+	v := AsString(f)
 	if len(v) == 5 && toUpper(v) == "INBOX" {
 		return "INBOX"
 	} else if !QuotedUTF8(f) {

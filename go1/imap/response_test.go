@@ -187,8 +187,15 @@ func TestResponseDecoders(t *testing.T) {
 		}
 
 		vout := reflect.ValueOf(rsp).MethodByName(test.call).Call(nil)
-		out := vout[0].Interface()
-		if !reflect.DeepEqual(out, test.out) {
+		out := make([]interface{}, len(vout))
+		for i, v := range vout {
+			out[i] = v.Interface()
+		}
+		if len(out) == 1 {
+			if !reflect.DeepEqual(out[0], test.out) {
+				t.Errorf("%s(%+q) expected\n%v; got\n%v", test.call, test.in, test.out, out[0])
+			}
+		} else if !reflect.DeepEqual(out, test.out) {
 			t.Errorf("%s(%+q) expected\n%v; got\n%v", test.call, test.in, test.out, out)
 		}
 	}

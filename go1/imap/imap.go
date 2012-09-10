@@ -207,6 +207,10 @@ func (c *Client) Login(username, password string) (cmd *Command, err error) {
 	if err == nil {
 		c.setState(Auth)
 		if cmd.result.Label != "CAPABILITY" {
+			// Gmail servers send an untagged CAPABILITY response after
+			// successful authentication. RFC 3501 states that the CAPABILITY
+			// response code in command completion should be used instead, so we
+			// ignore the untagged response.
 			_, err = c.Capability()
 		}
 	}

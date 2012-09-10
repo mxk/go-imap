@@ -91,12 +91,12 @@ func TestField(t *testing.T) {
 
 		{AsString, nil, ``},
 		{AsString, ``, ``},
-		{AsString, `x`, ``},
 		{AsString, `"\"`, ``},
 		{AsString, `"\x"`, ``},
 		{AsString, []byte(nil), ``},
 		{AsString, []byte(`x`), ``},
 		{AsString, []byte(`"x"`), ``},
+		{AsString, `x`, `x`},
 		{AsString, `""`, ``},
 		{AsString, `*""`, ``},
 		{AsString, `"x"`, `x`},
