@@ -10,7 +10,7 @@ import (
 	"net/mail"
 	"time"
 
-	imap "."
+	"code.google.com/p/go-imap/go1/imap"
 )
 
 func ExampleClient() {
