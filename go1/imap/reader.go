@@ -97,8 +97,10 @@ func (r *reader) Next() (raw *rawResponse, err error) {
 
 // More returns the next literal string and reads one more line from the server.
 func (r *reader) More(raw *rawResponse, i LiteralInfo) (l Literal, err error) {
-	if l, err = r.ReadLiteral(r, i); l != nil {
-		if raw.Literals = append(raw.Literals, l); err == nil {
+	src := io.LimitedReader{R: r, N: int64(i.Len)}
+	if l, err = r.ReadLiteral(&src, i); l != nil {
+		raw.Literals = append(raw.Literals, l)
+		if err == nil {
 			var line []byte
 			if line, err = r.ReadLine(); len(line) > 0 { // ok if err != nil
 				pos := raw.pos()
