@@ -169,6 +169,11 @@ func (s *SeqSet) AddSet(t *SeqSet) {
 	}
 }
 
+// Clear removes all values from the set.
+func (s *SeqSet) Clear() {
+	s.set = s.set[:0]
+}
+
 // Empty returns true if the sequence set does not contain any values.
 func (s SeqSet) Empty() bool {
 	return len(s.set) == 0
