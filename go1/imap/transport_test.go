@@ -188,7 +188,7 @@ func tlsNewConfig() (client, server *tls.Config, err error) {
 		NotBefore:             now.UTC(),
 		NotAfter:              now.Add(5 * time.Minute).UTC(),
 		BasicConstraintsValid: true,
-		IsCA:                  true,
+		IsCA: true,
 	}
 	priv, err := rsa.GenerateKey(rand.Reader, 512)
 	if err != nil {
