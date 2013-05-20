@@ -231,7 +231,6 @@ func TestReaderParse(t *testing.T) {
 		{"* NO [] ", nil},
 		{"* NO [] Bad", nil},
 		{"* NO [ ] No", nil},
-		{"* NO [x]", nil},
 		{"* NO [x] ", nil},
 		{"* NO [x Status", nil},
 		{"* NO [x ] Status", nil},
@@ -383,6 +382,12 @@ func TestReaderParse(t *testing.T) {
 			&Response{Tag: "A3", Type: Done, Status: BAD, Info: "Try again.", Label: "BADCHARSET", Fields: []Field{"BADCHARSET", []Field{"UTF-8"}}}},
 		{`A4 bad [BADCHARSET ({5}` + CRLF + `UTF-8)] NO`,
 			&Response{Tag: "A4", Type: Done, Status: BAD, Info: "NO", Label: "BADCHARSET", Fields: []Field{"BADCHARSET", []Field{lit("UTF-8")}}}},
+
+		// Status with response code but no text (violates RFC 3501)
+		{"* NO [x]",
+			&Response{Tag: "*", Type: Status, Status: NO, Label: "X", Fields: []Field{"x"}}},
+		{"* OK [UNSEEN 1]",
+			&Response{Tag: "*", Type: Status, Status: OK, Label: "UNSEEN", Fields: []Field{"UNSEEN", uint32(1)}}},
 
 		// Fetch data
 		{`* 10000 Fetch (Flags (\seen \DELETED) UID 4827313 RFC822.SIZE 44827)`,

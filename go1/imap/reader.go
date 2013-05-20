@@ -252,7 +252,13 @@ func (raw *rawResponse) parseStatus() error {
 			return err
 		} else if len(raw.Fields) == 0 {
 			return raw.error("empty response code", -1)
-		} else if len(raw.tail) == 0 || raw.tail[0] != ' ' {
+		} else if len(raw.tail) == 0 {
+			// Some servers do not send any text after the response code
+			// (e.g. "* OK [UNSEEN 1]"). This is not allowed, according to RFC
+			// 3501 ABNF, but we accept it for compatibility with other clients.
+			raw.tail = nil
+			return nil
+		} else if raw.tail[0] != ' ' {
 			return raw.missing("SP", 0)
 		}
 		raw.tail = raw.tail[1:]
