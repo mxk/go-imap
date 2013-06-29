@@ -12,39 +12,50 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
+	"sync"
 	"time"
 )
 
-// TLS client and server configuration.
-var tlsConfig = struct {
-	client *tls.Config
-	server *tls.Config
+var tlsCfg = struct {
+	sync.Mutex
+	c, s *tls.Config
 }{}
 
-func init() {
-	var err error
-	if tlsConfig.client, tlsConfig.server, err = tlsNewConfig(); err != nil {
-		panic(err)
+func clientTLS() *tls.Config {
+	tlsCfg.Lock()
+	defer tlsCfg.Unlock()
+	if tlsCfg.c == nil {
+		tlsCfg.c, tlsCfg.s = newConfig()
 	}
+	return tlsCfg.c
 }
 
-func tlsNewConfig() (client, server *tls.Config, err error) {
+func serverTLS() *tls.Config {
+	tlsCfg.Lock()
+	defer tlsCfg.Unlock()
+	if tlsCfg.s == nil {
+		tlsCfg.c, tlsCfg.s = newConfig()
+	}
+	return tlsCfg.s
+}
+
+func newConfig() (client, server *tls.Config) {
 	now := time.Now()
 	tpl := x509.Certificate{
-		SerialNumber:          new(big.Int).SetInt64(0),
-		Subject:               pkix.Name{CommonName: "localhost"},
-		NotBefore:             now.UTC(),
-		NotAfter:              now.Add(5 * time.Minute).UTC(),
+		SerialNumber:          new(big.Int).SetInt64(42),
+		Subject:               pkix.Name{CommonName: ServerName},
+		NotBefore:             now.Add(-2 * time.Hour).UTC(),
+		NotAfter:              now.Add(2 * time.Hour).UTC(),
 		BasicConstraintsValid: true,
 		IsCA: true,
 	}
 	priv, err := rsa.GenerateKey(rand.Reader, 512)
 	if err != nil {
-		return
+		panic(err)
 	}
 	crt, err := x509.CreateCertificate(rand.Reader, &tpl, &tpl, &priv.PublicKey, priv)
 	if err != nil {
-		return
+		panic(err)
 	}
 	key := x509.MarshalPKCS1PrivateKey(priv)
 	pair, err := tls.X509KeyPair(
@@ -52,13 +63,14 @@ func tlsNewConfig() (client, server *tls.Config, err error) {
 		pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: key}),
 	)
 	if err != nil {
-		return
+		panic(err)
 	}
 	root, err := x509.ParseCertificate(crt)
-	if err == nil {
-		server = &tls.Config{Certificates: []tls.Certificate{pair}}
-		client = &tls.Config{RootCAs: x509.NewCertPool(), ServerName: "localhost"}
-		client.RootCAs.AddCert(root)
+	if err != nil {
+		panic(err)
 	}
+	server = &tls.Config{Certificates: []tls.Certificate{pair}}
+	client = &tls.Config{RootCAs: x509.NewCertPool(), ServerName: ServerName}
+	client.RootCAs.AddCert(root)
 	return
 }
