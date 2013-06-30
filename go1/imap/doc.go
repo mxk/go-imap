@@ -1,9 +1,8 @@
-//
-// Written by Maxim Khitrov (September 2012)
-//
+// Copyright 2013 The Go-IMAP Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 /*
-
 Package imap implements an IMAP4rev1 client, as defined in RFC 3501.
 
 The implementation provides low-level access to all protocol features described
@@ -113,6 +112,5 @@ of a client application:
 	http://tools.ietf.org/html/rfc4469 -- Internet Message Access Protocol (IMAP) CATENATE Extension
 	http://tools.ietf.org/html/rfc4549 -- Synchronization Operations for Disconnected IMAP4 Clients
 	http://tools.ietf.org/html/rfc5530 -- IMAP Response Codes
-
 */
 package imap
