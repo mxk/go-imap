@@ -30,7 +30,7 @@ func NewMockServer(conn net.Conn) MockServer {
 	return mockServer{newTransport(conn, nil)}
 }
 
-type mockServer struct { *transport }
+type mockServer struct{ *transport }
 
 func (t mockServer) EnableTLS(config *tls.Config) (err error) {
 	if t.Encrypted() {

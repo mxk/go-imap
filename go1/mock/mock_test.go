@@ -53,7 +53,8 @@ func TestServer(T *testing.T) {
 		`S: + Ready for additional command text`,
 		`C: FRED FOOBAR {7}`,
 		`S: + Ready for additional command text`,
-		`C: fat man`,
+		mock.Recv("fat man"),
+		`C: `,
 		`S: A4 OK LOGIN completed`,
 	)
 	user := imap.NewLiteral([]byte("FRED FOOBAR"))
