@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -24,7 +25,7 @@ var (
 
 // prng is a deterministic pseudo-random number generator seeded using the
 // system clock.
-var prng = rand.New(rand.NewSource(time.Now().UnixNano()))
+var prng = rand.New(&prngSource{src: rand.NewSource(time.Now().UnixNano())})
 
 // gotest is set to true when the package is being executed by the test command.
 // It causes the Client to use predictable tag ids for scripting.
@@ -183,4 +184,23 @@ func b64dec(src []byte) ([]byte, error) {
 	dst := make([]byte, b64codec.DecodedLen(len(src)))
 	n, err := b64codec.Decode(dst, src)
 	return dst[:n], err
+}
+
+// prngSource is a goroutine-safe implementation of rand.Source.
+type prngSource struct {
+	mu  sync.Mutex
+	src rand.Source
+}
+
+func (r *prngSource) Int63() (n int64) {
+	r.mu.Lock()
+	n = r.src.Int63()
+	r.mu.Unlock()
+	return
+}
+
+func (r *prngSource) Seed(seed int64) {
+	r.mu.Lock()
+	r.src.Seed(seed)
+	r.mu.Unlock()
 }
