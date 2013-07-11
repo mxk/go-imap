@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"runtime"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -141,7 +140,6 @@ func NewClient(conn net.Conn, host string, timeout time.Duration) (c *Client, er
 	}
 	c.cch = cch
 	go c.receiver(cch)
-	runtime.Gosched()
 	return
 }
 
@@ -354,7 +352,6 @@ func (c *Client) recv(timeout time.Duration) (rsp *Response, err error) {
 			rch := make(chan *response, 1)
 			c.cch <- rch
 			c.rch = rch
-			runtime.Gosched()
 		}
 		var r *response
 		if timeout < 0 {
@@ -573,7 +570,6 @@ func (c *Client) setState(s ConnState) {
 		if s == Closed {
 			if c.cch != nil {
 				close(c.cch)
-				runtime.Gosched()
 			}
 			c.setCaps(nil)
 			c.deliver(abort)
