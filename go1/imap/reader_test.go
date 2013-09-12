@@ -514,6 +514,18 @@ func TestReaderParse(t *testing.T) {
 		// Literals in BODY[...] are handled, but are not included in Fields
 		{`* 12 FETCH (BODY[HEADER.FIELDS.NOT ({4}` + CRLF + `Date)]<0> NIL)`,
 			&Response{Tag: "*", Type: Data, Label: "FETCH", Fields: []Field{uint32(12), "FETCH", []Field{"BODY[HEADER.FIELDS.NOT ({4})]<0>", nil}}}},
+
+		// body-type-mpart is 1*body without a space in between
+		{`* 11603 FETCH (BODYSTRUCTURE (` +
+			`("TEXT" "PLAIN" ("CHARSET" "UTF-8") "text-body" NIL "7BIT" 1166 15 NIL NIL NIL)` +
+			`("TEXT" "HTML" ("CHARSET" "UTF-8") "html-body" NIL "QUOTED-PRINTABLE" 15038 192 NIL NIL NIL)` +
+			` "ALTERNATIVE" ("BOUNDARY" "----=_Part_169081_1994397778.1378998415121") NIL NIL))`,
+			&Response{Tag: "*", Type: Data, Label: "FETCH", Fields: []Field{
+				uint32(11603), "FETCH", []Field{"BODYSTRUCTURE", []Field{
+					[]Field{`"TEXT"`, `"PLAIN"`, []Field{`"CHARSET"`, `"UTF-8"`}, `"text-body"`, nil, `"7BIT"`, uint32(1166), uint32(15), nil, nil, nil},
+					[]Field{`"TEXT"`, `"HTML"`, []Field{`"CHARSET"`, `"UTF-8"`}, `"html-body"`, nil, `"QUOTED-PRINTABLE"`, uint32(15038), uint32(192), nil, nil, nil},
+					`"ALTERNATIVE"`, []Field{`"BOUNDARY"`, `"----=_Part_169081_1994397778.1378998415121"`}, nil, nil}}},
+			}},
 	}
 	c, s := newTestConn(1024)
 	C := newTransport(c, nil)
