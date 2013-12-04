@@ -330,7 +330,7 @@ func (raw *rawResponse) parseFields(stop byte) (fields []Field, err error) {
 				return
 			case '(':
 				// body-type-mpart is 1*body without a space in between
-				if stop != ')' || len(raw.tail) == 1 {
+				if len(raw.tail) == 1 {
 					err = raw.unexpected(0)
 				}
 			default:
