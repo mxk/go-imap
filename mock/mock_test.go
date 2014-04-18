@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"code.google.com/p/go-imap/go1/imap"
-	"code.google.com/p/go-imap/go1/mock"
+	"github.com/mxk/go-imap/imap"
+	"github.com/mxk/go-imap/mock"
 )
 
 func init() {

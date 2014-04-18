@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/go-imap/go1/imap"
+	"github.com/mxk/go-imap/imap"
 )
 
 // ServerName is the hostname used by the scripted server.
