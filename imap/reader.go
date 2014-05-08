@@ -139,6 +139,8 @@ func (r *reader) tag(line []byte) string {
 // Error returned by parseCondition to indicate that rsp.Type != Status.
 var errNotStatus error = &ParserError{Info: "not a status response"}
 
+var errNotListLsub error = &ParserError{Info: "not a list/lsub response"}
+
 // Parse converts rawResponse into a full Response object by calling parseX
 // methods, which gradually consume raw.tail.
 func (raw *rawResponse) Parse() (rsp *Response, err error) {
@@ -147,10 +149,16 @@ func (raw *rawResponse) Parse() (rsp *Response, err error) {
 	}
 	switch rsp = raw.Response; rsp.Tag {
 	case "*":
-		if err = raw.parseCondition(OK | NO | BAD | PREAUTH | BYE); err == nil {
+		err = raw.parseCondition(OK | NO | BAD | PREAUTH | BYE)
+		if err == nil {
 			rsp.Type = Status
 			err = raw.parseStatus()
-		} else if err == errNotStatus {
+		}
+		if err == errNotStatus {
+			// Verify if LIST or LSUB response
+			err = raw.parseListLsub()
+		}
+		if err == errNotListLsub {
 			rsp.Type = Data
 			rsp.Fields, err = raw.parseFields(nul)
 			if len(rsp.Fields) == 0 && err == nil {
@@ -242,6 +250,57 @@ outer:
 	return errNotStatus
 }
 
+func (raw *rawResponse) parseListLsub() error {
+	// Valid list, lsub responses
+	listResponse := [][]byte{[]byte("LIST"), []byte("LSUB")}
+outer:
+	for _, v := range listResponse {
+		if n := len(v); n <= len(raw.tail) {
+			for i, c := range v {
+				if raw.tail[i]&0xDF != c { // &0xDF converts [a-z] to upper case
+					continue outer
+				}
+			}
+			if n == len(raw.tail) {
+				return raw.missing("SP", n)
+			} else if raw.tail[n] != ' ' {
+				continue outer
+			}
+
+			// Parse exactly 4 fields. The last one is the mailbox name
+			for i := 0; i < 3; i++ {
+				fields, err := raw.parseFields(' ')
+				if err != nil {
+					return err
+				}
+				if len(fields) != 1 {
+					return raw.error("wrong number of fields", 0)
+				}
+				raw.Fields = append(raw.Fields, fields...)
+			}
+
+			var err error
+			var field Field
+			switch raw.next() {
+			case QuotedString:
+				field, err = raw.parseQuotedString()
+			case LiteralString:
+				field, err = raw.parseLiteralString()
+			default:
+				field, err = raw.parseAstring()
+			}
+			if err != nil {
+				return err
+			}
+			raw.Fields = append(raw.Fields, field)
+			raw.Type = Data
+			raw.tail = nil
+			return err
+		}
+	}
+	return errNotListLsub
+}
+
 // parseStatus extracts the optional response code and required text after the
 // status condition (ABNF: resp-text).
 func (raw *rawResponse) parseStatus() error {
@@ -319,15 +378,15 @@ func (raw *rawResponse) parseFields(stop byte) (fields []Field, err error) {
 		// Delimiter
 		if len(raw.tail) > 0 && err == nil {
 			switch raw.tail[0] {
+			case stop:
+				raw.tail = raw.tail[1:]
+				return
 			case ' ':
 				if len(raw.tail) > 1 {
 					raw.tail = raw.tail[1:]
 				} else {
 					err = raw.unexpected(0)
 				}
-			case stop:
-				raw.tail = raw.tail[1:]
-				return
 			case '(':
 				// body-type-mpart is 1*body without a space in between
 				if len(raw.tail) == 1 {
@@ -502,6 +561,27 @@ func (raw *rawResponse) parseAtom() (f Field, err error) {
 			f = string(atom)
 		}
 	}
+	raw.tail = raw.tail[n:]
+	return
+}
+
+func (raw *rawResponse) parseAstring() (f Field, err error) {
+	n := 0
+	for end := len(raw.tail); n < end; n++ {
+		if c := raw.tail[n]; c >= char || (atomSpecials[c] && c != '[' && c != ']') {
+			break // raw.tail[n] is a delimiter or an unexpected byte
+		}
+	}
+
+	// Astring must have at least one character, two if it starts with a backslash
+	if n < 2 {
+		err = raw.unexpected(0)
+		return
+	}
+
+	// Take whatever was found, let parseFields report delimiter errors
+	atom := raw.tail[:n]
+	f = string(atom)
 	raw.tail = raw.tail[n:]
 	return
 }

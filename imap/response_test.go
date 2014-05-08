@@ -66,6 +66,16 @@ func TestResponseDecoders(t *testing.T) {
 				Attrs: NewFlagSet(),
 				Delim: "/",
 				Name:  "blurdybloop"}},
+		{`* LSUB () "/" [blurdybloop]`,
+			"MailboxInfo", &MailboxInfo{
+				Attrs: NewFlagSet(),
+				Delim: "/",
+				Name:  "[blurdybloop]"}},
+		{`* LSUB () "/" #foo.bar/[blurdybloop`,
+			"MailboxInfo", &MailboxInfo{
+				Attrs: NewFlagSet(),
+				Delim: "/",
+				Name:  "#foo.bar/[blurdybloop"}},
 		{`* LIST (\Noselect) "." "#foo.bar"`,
 			"MailboxInfo", &MailboxInfo{
 				Attrs: NewFlagSet(`\Noselect`),
