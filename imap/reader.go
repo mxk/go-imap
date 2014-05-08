@@ -311,7 +311,7 @@ func (raw *rawResponse) parseFields(stop byte) (fields []Field, err error) {
 			raw.tail = raw.tail[1:]
 			f, err = raw.parseFields(')')
 		default:
-			f, err = raw.parseAtom()
+			f, err = raw.parseAtom(raw.Type == Data && stop != ']')
 		}
 		if err == nil || f != nil {
 			fields = append(fields, f)
@@ -442,7 +442,7 @@ func init() {
 // converted to uint32, NIL is converted to nil, everything else becomes a
 // string. Flags (e.g. "\Seen") are converted to title case, other strings are
 // left in their original form.
-func (raw *rawResponse) parseAtom() (f Field, err error) {
+func (raw *rawResponse) parseAtom(astring bool) (f Field, err error) {
 	n, flag := 0, false
 	for end := len(raw.tail); n < end; n++ {
 		if c := raw.tail[n]; c >= char || atomSpecials[c] {
@@ -450,6 +450,7 @@ func (raw *rawResponse) parseAtom() (f Field, err error) {
 			case '\\':
 				if n == 0 {
 					flag = true
+					astring = false
 					continue // ABNF: flag (e.g. `\Seen`)
 				}
 			case '*':
@@ -457,7 +458,7 @@ func (raw *rawResponse) parseAtom() (f Field, err error) {
 					n++ // ABNF: flag-perm (`\*`), end of atom
 				}
 			case '[':
-				if n > 0 && !flag {
+				if n == 4 && bytes.EqualFold(raw.tail[:4], []byte("BODY")) {
 					pos := raw.pos()
 					raw.tail = raw.tail[n+1:] // Temporary shift for parseFields
 
@@ -472,7 +473,12 @@ func (raw *rawResponse) parseAtom() (f Field, err error) {
 					n = raw.pos() - pos - 1
 					raw.tail = raw.line[pos:] // Undo temporary shift
 					end = len(raw.tail)
-					continue // ABNF: section (e.g. "BODY[...]<...>")
+					astring = false
+				}
+				continue // ABNF: fetch-att ("BODY[...]<...>"), atom, or astring
+			case ']':
+				if astring {
+					continue // ABNF: ASTRING-CHAR
 				}
 			}
 			break // raw.tail[n] is a delimiter or an unexpected byte

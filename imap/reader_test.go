@@ -241,7 +241,6 @@ func TestReaderParse(t *testing.T) {
 		{"* NO [ x)] Status", nil},
 		{"* NO [(x )] Status", nil},
 		{"* NO [( x)] Status", nil},
-		{"* ON [x] Not status", nil},
 
 		// Invalid data
 		{"* ", nil},
@@ -274,13 +273,9 @@ func TestReaderParse(t *testing.T) {
 		{`* "\x'"`, nil},
 		{`* "\\\"`, nil},
 
-		{"* [", nil},
-		{"* []", nil},
-		{"* [NO]", nil},
 		{"* BODY[", nil},
 		{"* BODY[] ", nil},
 		{"* BODY[ ]", nil},
-		{"* BODY[[]", nil},
 		{"* BODY[]]", nil},
 		{"* BODY[[]]", nil},
 
@@ -300,9 +295,7 @@ func TestReaderParse(t *testing.T) {
 		{`* atom%specials`, nil},
 		{`* atom*specials`, nil},
 		{`* atom"specials`, nil},
-		{`* atom[specials`, nil},
 		{`* atom\specials`, nil},
-		{`* atom]specials`, nil},
 
 		{"* atom\x01specials", nil},
 		{"* atom\x1Fspecials", nil},
@@ -325,6 +318,9 @@ func TestReaderParse(t *testing.T) {
 		{`* Atom aBc \flag \* BODY[ABC ("1" NIL)]<42> body[]`,
 			&Response{Tag: "*", Type: Data, Label: "ATOM", Fields: []Field{
 				"Atom", "aBc", `\Flag`, `\*`, `BODY[ABC ("1" NIL)]<42>`, "body[]"}}},
+		{`* Astring [ ] [] [x] BODY[[] atom[specials atom]specials`,
+			&Response{Tag: "*", Type: Data, Label: "ASTRING", Fields: []Field{
+				"Astring", "[", "]", "[]", "[x]", "BODY[[]", "atom[specials", "atom]specials"}}},
 		{`* Number -1 0 1 1.0 4294967295 4294967296`,
 			&Response{Tag: "*", Type: Data, Label: "NUMBER", Fields: []Field{
 				"Number", "-1", uint32(0), uint32(1), "1.0", ^uint32(0), "4294967296"}}},
