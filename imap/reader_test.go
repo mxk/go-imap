@@ -334,9 +334,9 @@ func TestReaderParse(t *testing.T) {
 		{`* Literal {0}` + CRLF + ` {2}` + CRLF + `hi x ~{3}` + CRLF + "\x00\r\n",
 			&Response{Tag: "*", Type: Data, Label: "LITERAL", Fields: []Field{
 				"Literal", lit(""), lit("hi"), "x", lit8("\x00\r\n")}}},
-		{`* List () ((()) (x ())) ((y) z)`,
-			&Response{Tag: "*", Type: Data, Label: "LIST", Fields: []Field{
-				"List", []Field(nil), []Field{[]Field{[]Field(nil)}, []Field{"x", []Field(nil)}}, []Field{[]Field{"y"}, "z"}}}},
+		{`* ParenthesizedList () ((()) (x ())) ((y) z)`,
+			&Response{Tag: "*", Type: Data, Label: "PARENTHESIZEDLIST", Fields: []Field{
+				"ParenthesizedList", []Field(nil), []Field{[]Field{[]Field(nil)}, []Field{"x", []Field(nil)}}, []Field{[]Field{"y"}, "z"}}}},
 		{`* NIL_ NIL nil Nil (NIL) "NIL"`,
 			&Response{Tag: "*", Type: Data, Label: "NIL_", Fields: []Field{
 				"NIL_", nil, nil, nil, []Field{nil}, `"NIL"`}}},
