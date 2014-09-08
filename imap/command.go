@@ -363,5 +363,8 @@ func defaultCommands() map[string]*CommandConfig {
 
 		// RFC 5161
 		"ENABLE": &CommandConfig{States: all, Filter: LabelFilter("ENABLED")},
+
+		// RFC 5256
+		"UID THREAD": &CommandConfig{States: all, Filter: NameFilter},
 	}
 }
