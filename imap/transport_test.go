@@ -412,7 +412,7 @@ func TestTransportErrors(t *testing.T) {
 	}
 
 	// Line too long for a single chunk (read)
-	in = "hello, world!!!"
+	in = "hello, world!!!!"
 	if err := S.send(in); err != nil {
 		t.Fatalf("S.send(%q) unexpected error; %v", in, err)
 	}

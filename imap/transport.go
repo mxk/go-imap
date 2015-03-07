@@ -174,14 +174,16 @@ func (t *transport) ReadLine() (line []byte, err error) {
 			temp := make([]byte, cn)
 			copy(temp, chunk)
 			line = append(line, temp...)
-		} else {
-			line = nil
 		}
 
 		// No err? we can break and carry on
 		if err == nil {
 			break
 		}
+	}
+
+	if n == 0 {
+		line = nil
 	}
 
 	// Check line format; if err == nil, the line ends with LF
