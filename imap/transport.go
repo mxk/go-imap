@@ -156,16 +156,32 @@ func (t *transport) Closed() bool {
 // text. Otherwise, all bytes that have been read are returned unmodified along
 // with an error explaining the problem.
 func (t *transport) ReadLine() (line []byte, err error) {
-	line, err = t.buf.ReadSlice(lf)
-	n := len(line)
 
-	// Copy bytes out of the read buffer
-	if n > 0 {
-		temp := make([]byte, n)
-		copy(temp, line)
-		line = temp
-	} else {
-		line = nil
+	var (
+		chunk []byte
+		n     int
+	)
+	// read the response in chunks until end of line or err
+	// if the err is a full buffer, keep chunkin.
+	// if theres any err beyond full buffer, give up.
+	for err == bufio.ErrBufferFull || err == nil {
+		chunk, err = t.buf.ReadSlice(lf)
+		cn := len(chunk)
+		n += cn
+
+		// Copy chunk bytes out of the read buffer
+		if cn > 0 {
+			temp := make([]byte, cn)
+			copy(temp, chunk)
+			line = append(line, temp...)
+		} else {
+			line = nil
+		}
+
+		// No err? we can break and carry on
+		if err == nil {
+			break
+		}
 	}
 
 	// Check line format; if err == nil, the line ends with LF
@@ -182,8 +198,6 @@ func (t *transport) ReadLine() (line []byte, err error) {
 		} else {
 			err = &ProtocolError{"bad line ending", line}
 		}
-	} else if err == bufio.ErrBufferFull {
-		err = &ProtocolError{"line too long", line}
 	}
 	t.LogLine(server, line, err)
 	return
