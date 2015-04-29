@@ -146,7 +146,7 @@ func TestReaderMore(t *testing.T) {
 
 		{"* {0}", nil},
 		{"* {0} " + CRLF, nil},
-		{"* {0}" + CRLF + " ", nil},
+		//{"* {0}" + CRLF + " ", nil},
 		{"* {0}" + CRLF + "{1}", nil},
 		{"* {1}" + CRLF + "{1}", nil},
 		{"* {1}" + CRLF + "x{1}", nil},
@@ -274,7 +274,7 @@ func TestReaderParse(t *testing.T) {
 		{`* "\\\"`, nil},
 
 		{"* BODY[", nil},
-		{"* BODY[] ", nil},
+		//{"* BODY[] ", nil},
 		{"* BODY[ ]", nil},
 		{"* BODY[]]", nil},
 		{"* BODY[[]]", nil},
@@ -467,6 +467,10 @@ func TestReaderParse(t *testing.T) {
 
 		// Page 54
 		{`* SEARCH 2 84 882`,
+			&Response{Tag: "*", Type: Data, Label: "SEARCH", Fields: []Field{"SEARCH", uint32(2), uint32(84), uint32(882)}}},
+
+		// Extra space at the end sent by Yahoo servers (violates RFC 3501)
+		{`* SEARCH 2 84 882 `,
 			&Response{Tag: "*", Type: Data, Label: "SEARCH", Fields: []Field{"SEARCH", uint32(2), uint32(84), uint32(882)}}},
 
 		// Page 66

@@ -320,11 +320,9 @@ func (raw *rawResponse) parseFields(stop byte) (fields []Field, err error) {
 		if len(raw.tail) > 0 && err == nil {
 			switch raw.tail[0] {
 			case ' ':
-				if len(raw.tail) > 1 {
-					raw.tail = raw.tail[1:]
-				} else {
-					err = raw.unexpected(0)
-				}
+				// Allow a space even if it's at the end of the response. Yahoo
+				// servers send "* SEARCH 2 84 882 " in violation of RFC 3501.
+				raw.tail = raw.tail[1:]
 			case stop:
 				raw.tail = raw.tail[1:]
 				return
