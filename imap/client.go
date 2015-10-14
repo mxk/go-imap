@@ -100,6 +100,9 @@ type Client struct {
 	cch chan<- chan<- *response
 	rch <-chan *response
 
+	// Recv interrupt channel.
+	ich <-chan error
+
 	// Low-level transport for sending commands and receiving responses.
 	t *transport
 	r *reader
@@ -230,6 +233,15 @@ func (c *Client) Recv(timeout time.Duration) error {
 	return err
 }
 
+// InterruptChan enables channel ch to interrupt an active Recv operation from
+// another goroutine. The error sent via ch will be returned by the blocked Recv
+// call. The caller must use other synchronization techniques to ensure that the
+// interrupted goroutine does not call other Client methods before it is safe to
+// do so. A nil channel disables interrupts.
+func (c *Client) InterruptChan(ch <-chan error) {
+	c.ich = ch
+}
+
 // SetLiteralReader installs a custom LiteralReader implementation into the
 // response receiver pipeline. It returns the previously installed LiteralReader
 // instance.
@@ -345,7 +357,7 @@ func (c *Client) receiver(cch <-chan chan<- *response) {
 func (c *Client) recv(timeout time.Duration) (rsp *Response, err error) {
 	if c.state == Closed {
 		return nil, io.EOF
-	} else if c.rch == nil && (timeout < 0 || c.cch == nil) {
+	} else if c.rch == nil && c.ich == nil && (timeout < 0 || c.cch == nil) {
 		rsp, err = c.next()
 	} else {
 		if c.rch == nil {
@@ -354,7 +366,7 @@ func (c *Client) recv(timeout time.Duration) (rsp *Response, err error) {
 			c.rch = rch
 		}
 		var r *response
-		if timeout < 0 {
+		if timeout < 0 && c.ich == nil {
 			r = <-c.rch
 		} else {
 			select {
@@ -363,9 +375,15 @@ func (c *Client) recv(timeout time.Duration) (rsp *Response, err error) {
 				if timeout == 0 {
 					return nil, ErrTimeout
 				}
+				var tch <-chan time.Time
+				if timeout > 0 {
+					tch = time.After(timeout)
+				}
 				select {
 				case r = <-c.rch:
-				case <-time.After(timeout):
+				case err = <-c.ich:
+					return nil, err
+				case <-tch:
 					return nil, ErrTimeout
 				}
 			}
