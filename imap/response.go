@@ -337,6 +337,88 @@ func (rsp *Response) QuotaRoot() (mbox string, roots []string) {
 	return
 }
 
+// Acl represents a single identifier right pair a mailbox
+// returned in a GETACL response, as described in RFC 4314.
+type Acl struct {
+	Identifier string // Identifier (user)
+	Rights     string // Rights
+}
+
+// Acl returns the mailbox name and an array of Acl pairs.
+// Each Acl pair contains and identifier for which the entry applies
+// and set of rights that the identifier has.
+func (rsp *Response) Acl() (mbox string, acl []*Acl) {
+	type vt struct {
+		mbox string
+		acl  []*Acl
+	}
+	v, ok := rsp.Decoded.(*vt)
+	if !ok && rsp.Decoded == nil && rsp.Label == "ACL" {
+		mbox = AsMailbox(rsp.Fields[1])
+		acllist := rsp.Fields[2:]
+		if len(acllist)%2 != 0 {
+			return
+		}
+		acl = make([]*Acl, len(acllist)/2)
+		for i := 0; i < len(acllist); i += 2 {
+			acl[i/2] = &Acl{
+				Identifier: AsString(acllist[i]),
+				Rights:     AsString(acllist[i+1]),
+			}
+		}
+	} else if ok {
+		mbox, acl = v.mbox, v.acl
+	}
+	return
+}
+
+// ListRights response occurs as a result of a LISTRIGHTS command.
+// The first two strings are the mailbox name and identifier for which
+// this rights list applies.  Following is an array containing the
+// (possibly empty) set of rights the identifier will always be granted
+// in the mailbox.
+func (rsp *Response) ListRights() (mbox string, rights string, optional []string) {
+	type vt struct {
+		mbox     string
+		rights   string
+		optional []string
+	}
+	v, ok := rsp.Decoded.(*vt)
+	if !ok && rsp.Decoded == nil && rsp.Label == "LISTRIGHTS" {
+		mbox = AsMailbox(rsp.Fields[2])
+		rights = AsString(rsp.Fields[3])
+		if len(rsp.Fields) < 4 {
+			return
+		}
+		optional = make([]string, len(rsp.Fields)-4)
+		for i := 4; i < len(rsp.Fields); i++ {
+			optional[i-4] = AsString(rsp.Fields[i])
+		}
+
+	} else if ok {
+		mbox, rights, optional = v.mbox, v.rights, v.optional
+	}
+	return
+}
+
+// MyRights response occurs as a result of a MYRIGHTS command.  The
+// first string is the mailbox name for which these rights apply.  The
+// second string is the set of rights that the client has.
+func (rsp *Response) MyRights() (mbox string, rights string) {
+	type vt struct {
+		mbox   string
+		rights string
+	}
+	v, ok := rsp.Decoded.(*vt)
+	if !ok && rsp.Decoded == nil && rsp.Label == "MYRIGHTS" {
+		mbox = AsMailbox(rsp.Fields[1])
+		rights = AsString(rsp.Fields[2])
+	} else if ok {
+		mbox, rights = v.mbox, v.rights
+	}
+	return
+}
+
 // ResponseError wraps a Response pointer for use in an error context, such as
 // when a command fails with a NO or BAD status condition. For Status and Done
 // response types, the value of Response.Info may be presented to the user.
