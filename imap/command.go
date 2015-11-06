@@ -355,6 +355,13 @@ func defaultCommands() map[string]*CommandConfig {
 		// RFC 3691
 		"UNSELECT": &CommandConfig{States: sel, Exclusive: true},
 
+		// RFC 4314
+		"SETACL":     &CommandConfig{States: auth},
+		"DELETEACL":  &CommandConfig{States: auth},
+		"GETACL":     &CommandConfig{States: auth, Filter: LabelFilter("ACL")},
+		"LISTRIGHTS": &CommandConfig{States: auth, Filter: NameFilter},
+		"MYRIGHTS":   &CommandConfig{States: auth, Filter: NameFilter},
+
 		// RFC 4315
 		"UID EXPUNGE": &CommandConfig{States: sel, Filter: NameFilter},
 

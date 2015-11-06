@@ -477,6 +477,58 @@ func (c *Client) ID(info ...string) (cmd *Command, err error) {
 	return c.Send("ID", f)
 }
 
+// SetAcl command changes the access control list on the specified
+// mailbox so that the specified Acl.identifier is granted permissions as
+// specified in Acl.Rights.
+// See RFC 4314 for additional information.
+func (c *Client) SetAcl(mbox string, acl *Acl) (cmd *Command, err error) {
+	if !c.Caps["ACL"] {
+		return nil, NotAvailableError("ACL")
+	}
+	return c.Send("SETACL", c.Quote(UTF7Encode(mbox)), c.Quote(acl.Identifier), c.Quote(acl.Rights))
+}
+
+// DeleteAcl command removes any <identifier,rights> pair for the
+// specified identifier from the access control list for the specified mailbox
+// See RFC 4314 for additional information.
+func (c *Client) DeleteAcl(mbox string, identifier string) (cmd *Command, err error) {
+	if !c.Caps["ACL"] {
+		return nil, NotAvailableError("ACL")
+	}
+	return c.Send("DELETEACL", c.Quote(UTF7Encode(mbox)), c.Quote(identifier))
+}
+
+// GetAcl returns identifier right pairs of ACL
+// Each pair contains the identifier for which the entry applies followed by the
+// set of rights that the identifier has.
+// See RFC 4314 for additional information.
+func (c *Client) GetAcl(mbox string) (cmd *Command, err error) {
+	if !c.Caps["ACL"] {
+		return nil, NotAvailableError("ACL")
+	}
+	return c.Send("GETACL", c.Quote(UTF7Encode(mbox)))
+}
+
+// ListRights command takes a mailbox name and an identifier and
+// returns information about what rights can be granted to the
+// identifier in the ACL for the mailbox.
+// See RFC 4314 for additional information.
+func (c *Client) ListRights(mbox string, identifier string) (cmd *Command, err error) {
+	if !c.Caps["ACL"] {
+		return nil, NotAvailableError("ACL")
+	}
+	return c.Send("LISTRIGHTS", c.Quote(UTF7Encode(mbox)), c.Quote(identifier))
+}
+
+// MyRights command returns the set of rights that the user has to mailbox
+// See RFC 4314 for additional information.
+func (c *Client) MyRights(mbox string) (cmd *Command, err error) {
+	if !c.Caps["ACL"] {
+		return nil, NotAvailableError("ACL")
+	}
+	return c.Send("MYRIGHTS", c.Quote(UTF7Encode(mbox)))
+}
+
 // CompressDeflate enables data compression using the DEFLATE algorithm. The
 // compression level must be between -1 and 9 (see compress/flate). See RFC 4978
 // for additional information.

@@ -95,6 +95,7 @@ The following RFCs are implemented by this package:
 	http://tools.ietf.org/html/rfc3501 -- INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1
 	http://tools.ietf.org/html/rfc3516 -- IMAP4 Binary Content Extension
 	http://tools.ietf.org/html/rfc3691 -- Internet Message Access Protocol (IMAP) UNSELECT command
+	http://tools.ietf.org/html/rfc4314 -- IMAP4 Access Control List (ACL) Extension
 	http://tools.ietf.org/html/rfc4315 -- Internet Message Access Protocol (IMAP) - UIDPLUS extension
 	http://tools.ietf.org/html/rfc4616 -- The PLAIN Simple Authentication and Security Layer (SASL) Mechanism
 	http://tools.ietf.org/html/rfc4959 -- IMAP Extension for Simple Authentication and Security Layer (SASL) Initial Client Response
