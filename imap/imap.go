@@ -194,6 +194,21 @@ func (c *Client) Auth(a SASL) (cmd *Command, err error) {
 	return
 }
 
+func (c *Client) Anonymous() (cmd *Command, err error) {
+	cmd, err = Wait(c.Send("AUTHENTICATE", "anonymous", "foo"))
+	if err == nil {
+		c.setState(Auth)
+		if cmd.result.Label != "CAPABILITY" {
+			// Gmail servers send an untagged CAPABILITY response after
+			// successful authentication. RFC 3501 states that the CAPABILITY
+			// response code in command completion should be used instead, so we
+			// ignore the untagged response.
+			_, err = c.Capability()
+		}
+	}
+	return
+}
+
 // Login performs plaintext username/password authentication. This command is
 // disabled when the server advertises LOGINDISABLED capability. The client
 // automatically requests new capabilities if authentication is successful.
