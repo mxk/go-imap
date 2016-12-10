@@ -411,17 +411,13 @@ func TestTransportErrors(t *testing.T) {
 		C.Flush()
 	}
 
-	// Line too long (read)
-	in = "hello, world!!!"
+	// Line too long for a single chunk (read)
+	in = "hello, world!!!!"
 	if err := S.send(in); err != nil {
 		t.Fatalf("S.send(%q) unexpected error; %v", in, err)
 	}
-	in += "\r"
-	for i := 0; i < 2; i++ {
-		if out, err := C.readln(); out != in || err == nil {
-			t.Fatalf("C.readln() expected %q; got %q (%v)", in, out, err)
-		}
-		in = "\n"
+	if out, err := C.readln(); out != in || err != nil {
+		t.Fatalf("C.readln() expected %q; got %q (%v)", in, out, err)
 	}
 
 	// Bad input
