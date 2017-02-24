@@ -341,6 +341,10 @@ func defaultCommands() map[string]*CommandConfig {
 		"UID STORE":  &CommandConfig{States: sel, Filter: FetchFilter},
 		"UID COPY":   &CommandConfig{States: sel},
 
+		// RFC 6851
+		"MOVE":     &CommandConfig{States: sel},
+		"UID MOVE": &CommandConfig{States: sel},
+
 		// RFC 2087
 		"SETQUOTA":     &CommandConfig{States: auth, Filter: LabelFilter("QUOTA")},
 		"GETQUOTA":     &CommandConfig{States: auth, Filter: LabelFilter("QUOTA")},
