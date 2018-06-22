@@ -103,7 +103,7 @@ func (c *Client) Logout(timeout time.Duration) (cmd *Command, err error) {
 		cmd, err = Wait(c.Send("LOGOUT"))
 	}
 	for err == nil {
-		if err = c.Recv(block); err == io.EOF {
+		if err = c.Recv(c.BlockTimeout); err == io.EOF {
 			return cmd, nil
 		}
 	}

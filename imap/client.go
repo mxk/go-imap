@@ -54,6 +54,7 @@ type response struct {
 
 // Client manages a single connection to an IMAP server.
 type Client struct {
+	BlockTimeout time.Duration
 	// FIFO queue for unilateral server data. The first response is the server
 	// greeting. Subsequent responses are those that were rejected by all active
 	// command filters. Commands documented as expecting "no specific responses"
@@ -130,6 +131,7 @@ func NewClient(conn net.Conn, host string, timeout time.Duration) (c *Client, er
 		cmds:          make(map[string]*Command),
 		t:             newTransport(conn, log),
 		debugLog:      log,
+		BlockTimeout:  block,
 	}
 	c.r = newReader(c.t, MemoryReader{}, string(c.tag.id))
 	c.Logf(LogConn, "Connected to %v (Tag=%s)", conn.RemoteAddr(), c.tag.id)
@@ -291,7 +293,7 @@ func (c *Client) greeting(timeout time.Duration) (err error) {
 	}
 
 	// Wait for server greeting
-	rsp, err := c.recv(block)
+	rsp, err := c.recv(c.BlockTimeout)
 	if err != nil {
 		return
 	} else if rsp.Type != Status || !c.deliver(rsp) {
@@ -534,7 +536,7 @@ func (c *Client) checkContinue(cmd *Command, sync bool) (rsp *Response, err erro
 		if err = c.t.Flush(); err != nil {
 			return
 		}
-		mode = block
+		mode = c.BlockTimeout
 	}
 	for cmd.InProgress() {
 		if rsp, err = c.recv(mode); err != nil {
