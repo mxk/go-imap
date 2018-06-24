@@ -107,7 +107,7 @@ func (cmd *Command) InProgress() bool {
 // command execution was interrupted prior to receiving a completion response.
 func (cmd *Command) Result(expect RespStatus) (rsp *Response, err error) {
 	for cmd.result == nil {
-		if err = cmd.client.Recv(block); err != nil {
+		if err = cmd.client.Recv(cmd.client.BlockTimeout); err != nil {
 			return
 		}
 	}

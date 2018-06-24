@@ -18,12 +18,12 @@ const (
 )
 
 // Dial returns a new Client connected to an IMAP server at addr.
-func Dial(addr string) (c *Client, err error) {
+func Dial(addr string, blockTime time.Duration) (c *Client, err error) {
 	addr = defaultPort(addr, "143")
 	conn, err := net.DialTimeout("tcp", addr, netTimeout)
 	if err == nil {
 		host, _, _ := net.SplitHostPort(addr)
-		if c, err = NewClient(conn, host, clientTimeout); err != nil {
+		if c, err = NewClient(conn, host, clientTimeout, blockTime); err != nil {
 			conn.Close()
 		}
 	}
@@ -32,13 +32,13 @@ func Dial(addr string) (c *Client, err error) {
 
 // DialTLS returns a new Client connected to an IMAP server at addr using the
 // specified config for encryption.
-func DialTLS(addr string, config *tls.Config) (c *Client, err error) {
+func DialTLS(addr string, config *tls.Config, blockTime time.Duration) (c *Client, err error) {
 	addr = defaultPort(addr, "993")
 	conn, err := net.DialTimeout("tcp", addr, netTimeout)
 	if err == nil {
 		host, _, _ := net.SplitHostPort(addr)
 		tlsConn := tls.Client(conn, setServerName(config, host))
-		if c, err = NewClient(tlsConn, host, clientTimeout); err != nil {
+		if c, err = NewClient(tlsConn, host, clientTimeout, blockTime ); err != nil {
 			conn.Close()
 		}
 	}
@@ -103,7 +103,7 @@ func (c *Client) Logout(timeout time.Duration) (cmd *Command, err error) {
 		cmd, err = Wait(c.Send("LOGOUT"))
 	}
 	for err == nil {
-		if err = c.Recv(block); err == io.EOF {
+		if err = c.Recv(c.BlockTimeout); err == io.EOF {
 			return cmd, nil
 		}
 	}
