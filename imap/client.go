@@ -118,7 +118,7 @@ type Client struct {
 // error is returned if either operation fails or does not complete before the
 // timeout, which must be positive to have any effect. If an error is returned,
 // it is the caller's responsibility to close the connection.
-func NewClient(conn net.Conn, host string, timeout time.Duration) (c *Client, err error) {
+func NewClient(conn net.Conn, host string, timeout time.Duration, blockTime time.Duration) (c *Client, err error) {
 	log := newDebugLog(DefaultLogger, DefaultLogMask)
 	cch := make(chan chan<- *response, 1)
 
@@ -131,7 +131,7 @@ func NewClient(conn net.Conn, host string, timeout time.Duration) (c *Client, er
 		cmds:          make(map[string]*Command),
 		t:             newTransport(conn, log),
 		debugLog:      log,
-		BlockTimeout:  block,
+		BlockTimeout:  blockTime,
 	}
 	c.r = newReader(c.t, MemoryReader{}, string(c.tag.id))
 	c.Logf(LogConn, "Connected to %v (Tag=%s)", conn.RemoteAddr(), c.tag.id)
